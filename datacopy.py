@@ -91,7 +91,7 @@ if __name__ == '__main__':
         print "usage:"
         print '     datacopy.py   shell_url   password     webpath(the web path you want to down, null means path of site, split with ",", if there is a directory you do not want to download, use "~", such as "~C:/windows")'
         print 'example:'
-        print 'datacopy.py    http://www.exmaple.com/1.php    password     "C:/users/range/desktop,C:/users/range/desktop,C:/User/srange/Contacts,~C:/Users/range/desktop/datacopy'
+        print 'datacopy.py    http://www.exmaple.com/1.php    password     C:/users/range/desktop,C:/users/range/desktop,C:/User/srange/Contacts,~C:/Users/range/desktop/datacopy'
         exit()
     no_paths = []
     paths = re.sub(' ', '', paths).split(',')
